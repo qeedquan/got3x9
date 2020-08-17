@@ -1,0 +1,17 @@
+CHANGES		change log
+MANIFEST	this file
+Makefile	Makefile
+README		read me
+_csums		checksums
+dump.c		dump code part of a T3X9-generated ELF file
+t-vm.t		T3X9->Tcode9 compiler
+t.c		T3X9->ELF boostrapping compiler
+t.elf		T3X9->ELF compiler, FreeBSD-386-ELF executable
+t.t		T3X9->ELF compiler
+t.vm		T3X9->Tcode9 compiler, Tcode9 VM executable
+t3x-history.txt	short summary of T3X language
+t3x.bnf		yaccable T3X9 grammar
+t3x.txt		T3X9 micro manual
+tcdis.c		Tcode9 disassembler
+tcvm.c		ad-hoc Tcode9 virtual machine
+test.t		test program

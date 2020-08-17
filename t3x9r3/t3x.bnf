@@ -1,0 +1,221 @@
+%token SYMBOL, INTEGER, CHARACTER, STRING
+%token VAR, CONST, STRUCT, DECL, DO, END
+%token IF, IE, ELSE, WHILE, FOR, LEAVE, LOOP,
+%token RETURN, HALT, MODULO
+
+%%
+
+Program:
+	Declarations CompoundStmt
+	;
+
+Declarations:
+	Declaration
+	| Declaration Declarations
+	;
+
+Declaration:
+	VAR VarList ';'
+	| CONST ConstList ';'
+	| DECL DeclList ';'
+	| STRUCT SYMBOL '=' StructMembers ';'
+	| FunctionDecl
+	;
+
+VarList:
+	SYMBOL
+	| SYMBOL '[' ConstValue ']'
+	| VarList ',' SYMBOL
+	;
+
+ConstList:
+	ConstDef
+	| ConstDef ',' ConstList
+	;
+
+ConstDef:
+	SYMBOL '=' ConstValue
+	;
+
+DeclList:
+	Decl
+	| Decl ',' DeclList
+	;
+
+Decl:
+	SYMBOL '(' ConstValue ')'
+	;
+
+StructMembers:
+	SYMBOL
+	| SYMBOL ',' StructMembers ';'
+	;
+
+FunctionDecl:
+	SYMBOL '(' OptFormalArgs ')' Statement
+	;
+
+OptFormalArgs:
+	| ArgumentList
+	;
+
+ArgumentList:
+	SYMBOL
+	| SYMBOL ',' ArgumentList
+	;
+
+Statement:
+	CompoundStmt
+	| SYMBOL ':=' Expression ';'
+	| SYMBOL Subscripts ':=' Expression ';'
+	| FunctionCall
+	| IF '(' Expression ')' Statement
+	| IE '(' Expression ')' Statement
+	  ELSE Statement
+	| WHILE '(' Expression ')' Statement
+	| FOR '(' SYMBOL '=' Expression ','
+	          Expression ')'
+	      Statement
+	| FOR '(' SYMBOL '=' Expression ','
+	          Expression,
+	          ConstValue ')'
+	      Statement
+	| LEAVE ';'
+	| LOOP ';'
+	| RETURN Expression ';'
+	| HALT ConstValue ';'
+	| ';'
+	;
+
+CompoundStmt:
+	DO END
+	| DO LocalDecls END
+	| DO StatementList END
+	| DO LocalDecls StatementList END
+	;
+
+LocalDecls:
+	LocalDecl
+	| LocalDecl LocalDecls
+	;
+
+LocalDecl:
+	VAR VarList ';'
+	| CONST ConstList ';'
+	| STRUCT SYMBOL '=' StructMembers ';'
+	;
+
+StatementList:
+	Statement
+	| Statement StatementList
+	;
+
+ExprList:
+	Expression
+	| Expression ',' ExprList
+	;
+
+Expression:
+	Disjunction
+	| Disjunction '->' Expression ':' Expression
+	;
+
+Disjunction:
+	Conjunction
+	| Conjunction '/\\' Disjunction
+	;
+
+Conjunction:
+	Equation
+	| Equation '\\/' Conjunction
+	;
+
+Equation:
+	Relation
+	| Relation '=' Equation
+	| Relation '\\=' Equation
+	;
+
+Relation:
+	BitOperation
+	| BitOperation '<' Relation
+	| BitOperation '>' Relation
+	| BitOperation '<=' Relation
+	| BitOperation '>=' Relation
+	;
+
+BitOperation:
+	Sum
+	| Sum '&' BitOperation
+	| Sum '|' BitOperation
+	| Sum '^' BitOperation
+	| Sum '<<' BitOperation
+	| Sum '>>' BitOperation
+	;
+
+Sum:
+	Term
+	| Term '+' Sum
+	| Term '-' Sum
+	;
+
+Term:
+	Factor
+	| Factor '*' Term
+	| Factor '/' Term
+	| Factor MODULO Term
+	;
+
+Factor:
+	INTEGER
+	| FunctionCall
+	| STRING
+	| Table
+	| SYMBOL
+	| SYMBOL Subscripts
+	| '@' SYMBOL
+	| '@' SYMBOL Subscripts
+	| '-' Factor
+	| '\\' Factor
+	| '~' Factor
+	| '(' Expression ')'
+	;
+
+Subscripts:
+	'[' Expression ']'
+	| '[' Expression ']' Subscripts
+	| '::' Factor
+	;
+	
+Table:
+	'[' MemberList ']'
+	;
+
+MemberList:
+	TableMember
+	| TableMember ',' MemberList
+	;
+
+TableMember:
+	ConstValue
+	| STRING
+	| Table
+	| '(' ExprList ')'
+	;
+
+FunctionCall:
+	SYMBOL '(' ')'
+	| SYMBOL '(' ExprList ')'
+	;
+
+ConstValue:
+	SYMBOL
+	| Integer
+	;
+
+Integer:
+	INTEGER
+	| CHARACTER
+	;
+%%
+

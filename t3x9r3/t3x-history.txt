@@ -1,0 +1,61 @@
+
+	A SHORT HISTORY OF THE T3X LANGUAGE
+
+	T3X is a tiny block-structured language that you probably
+	haven't heard about. It had a tiny community back in the
+	mid-1990's. Software written in T3X includes its own compiler
+	(of course), its own text-based IDE, a few LISP interpreters,
+	an assembler and linker for the 8086, and a database system
+	used by a local church community. It was also used in a few
+	college courses, most probably because its community was so
+	tiny that nobody could be bothered to do your homework
+	assignments for you.
+
+	The T3X language started as a very minimalistic language
+	with a single-file compiler that targeted the 8086 and 386
+	processors. It supported FreeBSD via the GNU binutils and
+	emitted DOS EXE files through its own assembler and linker.
+
+	In its lifetime, several enhancements were made to both the
+	language and its implementation:
+
+	- An object system was added to the language, and the entire
+	  runtime support infrastructure was rewritten as a set of
+	  classes.
+	- Tcode, an abstract target language, was added. It could be
+	  interpreted, optimized, linked, and converted to native
+	  code.
+	- A back-end for the AXP 21064 (Alpha) was added.
+	- A C back-end was added, allowing to use T3X on otherwise
+	  unsupported processors.
+	- Runtime support for the following platforms was added:
+	  NetBSD-386, NetBSD-Alpha, FreeBSD-386, Coherent-386,
+	  Linux-386, and Plan 9 (via C).
+
+	T3X is probably notable, because it is a typeless object
+	oriented language. Objects are distinguished by the methods
+	they implement, and the methods are typeless procedures.
+	The T3X object system is more similar to ADA packages than
+	to the C++ or Java approach. It implements reusable modules
+	rather than data types.
+
+	T3X-8.1.7 was the last version of T3X and it was released in
+	2004 with some minor updates in 2011 and 2014. Its generic
+	(Tcode) port still runs on modern operating systems.
+
+	T3X9 is a subset of the T3X language that compiles directly
+	from T3X to ELF-FreeBSD-386.
+
+	If you are familiar with T3X, this is what the compiler omits
+	from the original language: modules, objects, classes, packed
+	vectors, function pointers and indirect function calls, meta
+	commands, unsigned operators. Also, constant expression syntax
+	is only a subset.
+
+	The T3X9 compiler is under 1600 lines in size and compiles
+	itself from source to ELF in about 0.06 seconds on a 750MHz
+	notebook computer. The resulting binary has a size of less
+	than 32K bytes. The T3X9r2 compiler has a slightly larger
+	size (about 33K bytes) and additional language constructs
+	(packed tables, hex literal prefixes) and runtime functions.
+
