@@ -1,0 +1,876 @@
+<HTML>
+<HEAD>
+<TITLE>T3X9 Micro Manual - T3X.ORG</TITLE>
+<LINK rel="stylesheet" type="text/css" href="../t3x.css">
+<META name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<STYLE>
+UL { line-height: 150%; }
+IMG { margin: 0; margin-left: 0.5em; margin-bottom: 1em; }
+</STYLE>
+</HEAD>
+<BODY>
+
+<DIV class=menu>http://<A href="../index.html">t3x.org</A>/<A href="index.html">t3x</A>/<A href="uman.html">uman.html</A></DIV>
+
+<HR>
+
+<H1>A T3X9 Micro Manual</H1>
+
+<H2>Contents</H2>
+
+<P>
+<A href="#prog">Program</A> |
+<A href="#comm">Comments</A> |
+<A href="#decl">Declarations</A> |
+<A href="#stat">Statements</A> |
+<A href="#expr">Expressions</A> |
+<A href="#cond">Conditions</A> |
+<A href="#fcall">Function Calls</A> |
+<A href="#lit">Literals</A> |
+<A href="#cval">Cvalues</A> |
+<A href="#conv">Naming Conventions</A> |
+<A href="#shad">Shadowing</A> |
+<A href="#lib">Built-In Functions</A> |
+<A href="#lib2">Release 2 Built-Ins</A> |
+<A href="#varfn">Variadic Functions</A>
+</P>
+
+<H2><A name="prog"></A>Program</H2>
+
+<P>A program is a set of declarations followed by a compound
+statement. Here is the minimal T3X program:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+DO END
+</PRE></TD></TR></TABLE>
+
+<H2><A name="comm"></A>Comments</H2>
+
+<P>A comment is started with an exclamation point (!) and extends
+up to the end of the current line. Example:</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO END  ! Do nothing
+</PRE></TD></TR></TABLE>
+
+<H2><A name="decl"></A>Declarations</H2>
+
+<H3><A name="const"></A><CODE>CONST name = cvalue, ... ;</CODE></H3>
+
+<P>Assign names to constant values.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+CONST false = 0, true = %1;
+</PRE></TD></TR></TABLE>
+
+<H3><A name="var"></A><CODE>VAR name, ... ;<BR>
+VAR name[cvalue], ... ;<BR>
+VAR name::cvalue, ... ;</CODE></H3>
+
+<P>Define variables, vectors, and byte vectors, respectively.
+Different definitions may be mixed. Vector elements start at
+an index of 0.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+VAR stack[STACK_LEN], ptr;
+</PRE></TD></TR></TABLE>
+
+<H3><A name="struct"></A><CODE>STRUCT name = name_1, ..., name_N;</CODE></H3>
+
+<P>Shorthand for</P>
+
+<TABLE><TR><TD><PRE class=exm>
+CONST name_1 = 0, ..., name_N = N-1, name = N;
+</PRE></TD></TR></TABLE>
+
+<P>Used to impose structure on vectors and byte vectors.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+STRUCT POINT = PX, PY, PCOLOR;
+VAR    p[POINT];
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>DECL name(cvalue), ... ;</CODE></H3>
+
+<P>Declare functions whose definitions follow later, where the
+cvalue is the number of arguments. Used to implement mutual
+recursion.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DECL odd(1);
+even(x) RETURN x=0-&gt; 1: odd(x-1);
+odd(x) RETURN x=1-&gt; 1: even(x-1);
+</PRE></TD></TR></TABLE>
+
+<H3><A name="fdecl"></A><CODE>name(name_1, ...) statement</CODE></H3>
+
+<P>Define function <I>name</I> with arguments <I>name_1</I>, ... and a
+statement as its body. The number of arguments must match
+any previous <CODE>DECL</CODE> of the same function.</P>
+
+<P>The arguments of a function are only visible within the
+(statement) of the function.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+hello(s, x) DO VAR i;
+    FOR (i=0, x) DO
+        writes(s);
+        writes("\n");
+    END
+END
+</PRE></TD></TR></TABLE>
+
+<P>(<CODE>Writes()</CODE> writes a string.)</P>
+
+<H2><A name="stat"></A>Statements</H2>
+
+<H3><CODE>name := expression;</CODE></H3>
+
+<P>Assign the value of an expression to a variable.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO VAR x; x := 123; END
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>name[value]... := value;<BR>
+name::value := value;</CODE></H3>
+
+<P>Assign the value of an expression to an element of a vector
+or a byte vector. Multiple subscripts may be applied to to a
+vector:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+vec[i][j]... := i*j;
+</PRE></TD></TR></TABLE>
+
+<P>In general, <CODE>vec[i][j]</CODE> denotes the j'th element of the i'th
+element of <CODE>vec</CODE>.</P>
+
+<P>Note that the <CODE>::</CODE> operator is right-associative,
+<CODE>so v::x::i</CODE>
+equals <CODE>v::(x::i)</CODE>. This is particularly important when mixing
+subscripts, because</P>
+
+<TABLE><TR><TD><PRE class=exm>
+vec[i]::j[k] := 0;
+</PRE></TD></TR></TABLE>
+
+<P>would assign 0 to the <CODE>j[k]</CODE>'th element of <CODE>vec[i]</CODE>.
+(This makes sense, because <CODE>vec[i]::j</CODE> would not deliver a valid
+address.)</P>
+
+<H3><CODE>name();<BR>
+name(expression_1, ...);</CODE></H3>
+
+<P>Call the function with the given name, passing the values of the
+expressions to the function. An empty set of parentheses is used
+to pass zero arguments. The result of the function is discarded.</P>
+
+<P>For further details see the description of function calls in the
+expression section.</P>
+
+
+<H3><A name="if"></A><CODE>IF (condition) statement_1<BR>
+IE (condition) statement_1 ELSE statement_2</CODE></H3>
+
+<P>Both of these statements run <I>statement_1</I>, if the given
+condition is true.</P>
+
+<P>In addition, <CODE>IE/ELSE</CODE> runs <I>statement_2</I>, if the
+conditions is false. In this case, <CODE>IF</CODE> just passes control
+to the subsequent statement.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+IE (0)
+    IF (1) RETURN 1;
+ELSE
+    RETURN 2;
+</PRE></TD></TR></TABLE>
+
+<P>The example always returns 2, because only an <CODE>IE</CODE>
+statement can have an <CODE>ELSE</CODE> branch. There is no
+"dangling else" problem.</P>
+
+<H3><A name="while"></A><CODE>WHILE (condition) statement</CODE></H3>
+
+<P>Repeat the statement while the condition is true. When the
+condition is not true initially, never run the statement.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+! Count from 1 to 10
+DO VAR i;
+    i := 0;
+    WHILE (i &lt; 10)
+       i := i+1;
+END
+</PRE></TD></TR></TABLE>
+
+<H3><A name="for"></A>
+<CODE>FOR (name=expression_1, expression_2, cvalue) statement<BR>
+FOR (name=expression_1, expression_2) statement</CODE></H3>
+
+<P>Assign the value of <I>expression_1</I> to <I>name</I>, then compare
+<I>name</I> to <I>expression_2</I>. If <I>cvalue</I> is not negative, repeat
+the statement while <CODE>name &lt; expression_2</CODE>. Otherwise repeat
+the statement while <CODE>name &gt; expression_2</CODE>. After running the
+statement, add <I>cvalue</I> to <I>name</I>. Formally:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+name := expression_1;
+WHILE ( cvalue &gt; 0 /\ name &lt; expression \/
+        cvalue &lt; 0 /\ name &gt; expression )
+DO
+    statement;
+    name := name + cvalue;
+END
+</PRE></TD></TR></TABLE>
+
+<P>When the cvalue is omitted, it defaults to 1.</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+DO VAR i;
+    FOR (i=1, 11);     ! count from 1 to 10
+    FOR (i=10, 0, %1); ! count from 10 to 1
+END
+</PRE></TD></TR></TABLE>
+
+<H3><A name="leave"></A><CODE>LEAVE;</CODE></H3>
+
+<P>Leave the innermost <CODE>WHILE</CODE> or <CODE>FOR</CODE> loop,
+passing control to the first statement following the loop.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO VAR i;  ! Count from 1 to 50
+    FOR (i=1, 100) IF (i=50) LEAVE;
+END
+</PRE></TD></TR></TABLE>
+
+<H3><A name="loop"></A><CODE>LOOP;</CODE></H3>
+
+<P>Re-enter the innermost <CODE>WHILE</CODE> or <CODE>FOR</CODE> loop.
+<CODE>WHILE</CODE> loops are re-entered at the point where the condition
+is tested, and <CODE>FOR</CODE> loops are re-entered at the point where
+the counter is incremented.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO VAR i;    ! This program never prints X
+    FOR (i=1, 10) DO
+        LOOP;
+        T.WRITE(1, "X", 1);
+    END
+END
+</PRE></TD></TR></TABLE>
+
+<H3><A name="return"></A><CODE>RETURN expression;</CODE></H3>
+
+<P>Return a value from a function. For further details see the
+description of function calls in the expression section.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+inc(x) RETURN x+1;
+</PRE></TD></TR></TABLE>
+
+<H3><A name="halt"></A><CODE>HALT cvalue;</CODE></H3>
+
+<P>Halt program and return the given exit code to the operating
+system.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+HALT 1;
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>DO statement ... END<BR>
+DO declaration ... statement ... END</CODE></H3>
+
+<P>Compound statement of the form <CODE>DO</CODE> ... <CODE>END</CODE> are
+used to place multiple statements in a context where only a single statement
+is expected, like selection, loop, and function bodies.</P>
+
+<P>A compound statement may declare its own local variables,
+constant, and structures (using <CODE>VAR</CODE>, <CODE>CONST</CODE>,
+or <CODE>STRUCT</CODE>). A local variable of a compound statement is
+created and allocated at the beginning of the statement is ceases to
+exist at the end of the statement.</P>
+
+<P>Note that the form</P>
+
+<TABLE><TR><TD><PRE class=exm>
+DO declaration ... END 
+</PRE></TD></TR></TABLE>
+
+<P>also exists, but is essentially an empty statement.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO var i, x;  ! Compute 10 factorial
+   x := 1;
+   for (i=1, 10)
+       x := x*i;
+END
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>DO END<BR>
+;</CODE></H3>
+
+<P>These are both empty statements or null statements. They do not
+do anything when run and may be used as placeholders where a
+statement would be expected. They are also used to show that
+nothing is to be done in a specific situation, like in</P>
+
+<TABLE><TR><TD><PRE class=exm>
+IE (x = 0)
+     ;
+ELSE IE (x &lt; 0)
+     statement;
+ELSE
+     statement;
+</PRE></TD></TR></TABLE>
+
+<DIV>&nbsp;</DIV>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+FOR (i=0, 100000) DO END  ! waste some time
+</PRE></TD></TR></TABLE>
+
+<H2><A name="expr"></A>Expressions</H2>
+
+<P>An expression is a variable or a literal or a function call or
+a set of operators applied to one of these. There are unary,
+binary, and ternary operators.</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+-a      ! negate a
+b*c     ! product of b and c
+x-&gt;y:z  ! if x then y else z
+</PRE></TD></TR></TABLE>
+
+<P>In the following, the symbols <I>X</I>, <I>Y</I>, and <I>Z</I>
+denote variables or literals.</P>
+
+<P>These operators exist (P denotes precedence, A associativity):</P>
+
+<TABLE class=table>
+ <TR><TH>Operator</TH>
+     <TH>P</TH>
+     <TH>A</TH>
+     <TH>Description</TH></TR>
+ <TR><TD><CODE>X[Y]</CODE></TD>
+     <TD>9</TD><TD>L</TD>
+     <TD>the Y'th element of the vector X</TD></TR>
+ <TR><TD><CODE>X::Y</CODE></TD>
+     <TD>9</TD><TD>R</TD>
+     <TD>the Y'th byte of the byte vector X</TD></TR>
+ <TR><TD><CODE>-X</CODE></TD>
+     <TD>8</TD><TD>-</TD>
+     <TD>the negative value of X</TD></TR>
+ <TR><TD><CODE>~X</CODE></TD>
+     <TD>8</TD><TD>-</TD>
+     <TD>the bitwise inverse of X</TD></TR>
+ <TR><TD><CODE>\X</CODE></TD>
+     <TD>8</TD><TD>-</TD>
+     <TD>logical NOT of X</TD></TR>
+ <TR><TD><CODE>@X</CODE></TD>
+     <TD>8</TD><TD>-</TD>
+     <TD>the address of X</TD></TR>
+ <TR><TD><CODE>X*Y</CODE></TD>
+     <TD>7</TD><TD>L</TD>
+     <TD>the product of X and Y</TD></TR>
+ <TR><TD><CODE>Y/Y</CODE></TD>
+     <TD>7</TD><TD>L</TD>
+     <TD>the integer quotient of X and Y</TD></TR>
+ <TR><TD><CODE>X mod Y</CODE></TD>
+     <TD>7</TD><TD>L</TD>
+     <TD>the division remainder of X and Y</TD></TR>
+ <TR><TD><CODE>X+Y</CODE></TD>
+     <TD>6</TD><TD>L</TD>
+     <TD>the sum of X and Y</TD></TR>
+ <TR><TD><CODE>X-Y</CODE></TD>
+     <TD>6</TD><TD>L</TD>
+     <TD>the difference between X and Y</TD></TR>
+ <TR><TD><CODE>X&Y</CODE></TD>
+     <TD>5</TD><TD>L</TD>
+     <TD>the bitwise AND of X and Y</TD></TR>
+ <TR><TD><CODE>X|Y</CODE></TD>
+     <TD>5</TD><TD>L</TD>
+     <TD>the bitwise OR of X and Y</TD></TR>
+ <TR><TD><CODE>X^Y</CODE></TD>
+     <TD>5</TD><TD>L</TD>
+     <TD>the bitwise XOR of X and Y</TD></TR>
+ <TR><TD><CODE>X&lt;&lt;Y</CODE></TD>
+     <TD>5</TD><TD>L</TD>
+     <TD>X shifted to the left by Y bits</TD></TR>
+ <TR><TD><CODE>X&gt;&gt;Y</CODE></TD>
+     <TD>5</TD><TD>L</TD>
+     <TD>X shifted to the right by Y bits</TD></TR>
+ <TR><TD><CODE>X&lt;Y</CODE></TD>
+     <TD>4</TD><TD>L</TD>
+     <TD>%1, if X is less than Y, else 0</TD></TR>
+ <TR><TD><CODE>X&gt;Y</CODE></TD>
+     <TD>4</TD><TD>L</TD>
+     <TD>%1, if X is less than Y, else 0</TD></TR>
+ <TR><TD><CODE>X&lt;=Y</CODE></TD>
+     <TD>4</TD><TD>L</TD>
+     <TD>%1, if X is less/equal Y, else 0</TD></TR>
+ <TR><TD><CODE>X&gt;=Y</CODE></TD>
+     <TD>4</TD><TD>L</TD>
+     <TD>%1, if X is greater/equal Y, else 0</TD></TR>
+ <TR><TD><CODE>X=Y</CODE></TD>
+     <TD>3</TD><TD>L</TD>
+     <TD>%1, if X equals Y, else 0</TD></TR>
+ <TR><TD><CODE>X\=Y</CODE></TD>
+     <TD>3</TD><TD>L</TD>
+     <TD>%1, if X does not equal Y, else 0</TD></TR>
+ <TR><TD><A name="condop"></A><CODE>X/\Y</CODE></TD>
+     <TD>2</TD><TD>L</TD>
+     <TD>if X then Y else 0 (short-circuit AND)</TD></TR>
+ <TR><TD><CODE>X\/Y</CODE></TD>
+     <TD>1</TD><TD>L</TD>
+     <TD>if X then X else Y (short-circuit OR)</TD></TR>
+ <TR><TD><CODE>X-&gt;Y:Z</CODE></TD>
+     <TD>0</TD><TD>-</TD>
+     <TD>if X then Y else Z</TD></TR>
+</TABLE>
+
+<P>Higher precedence means that an operator binds stronger, e.g.
+<CODE>-X::Y</CODE> actually means <CODE>-(X::Y)</CODE>.</P>
+
+<P>Left-associativity (L) means that <CODE>x+y+z = (x+y)+z</CODE> and
+right-associativity (R) means that <CODE>x::y::z = x::(y::z)</CODE>.</P>
+
+<H2><A name="cond"></A>Conditions</H2>
+
+<P>A condition is an expression appearing in a condition context,
+like the condition of an <CODE>IF</CODE> or <CODE>WHILE</CODE> statement
+or the first operand of the <CODE>X-&gt;Y:Z</CODE> operator.</P>
+
+<P>In an expression context, the value 0 is considered to be
+"false", and any other value is considered to be true.</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+X=X  ! true
+1=2  ! false
+"x"  ! true
+5&gt;7  ! false
+</PRE></TD></TR></TABLE>
+
+<P>The canonical truth value, as returned by <CODE>1=1</CODE>,
+is <CODE>%1</CODE>.</P>
+
+<H2><A name="fcall"></A>Function Calls</H2>
+
+<P>When a function call appears in an expression, the result of
+the function, as returned by <CODE>RETURN</CODE> is used as an operand.</P>
+
+<P>A function call is performed as follows:</P>
+
+<P>Each actual argument in the call</P>
+
+<TABLE><TR><TD><PRE class=exm>
+function(argument_1, ...)
+</PRE></TD></TR></TABLE>
+
+<P>is passed to the function and bound to the corresponding formal
+argument ("argument") of the receiving function. The function
+then runs its statement, which may produce a value via <CODE>RETURN</CODE>.
+When no <CODE>RETURN</CODE> statement exists in the statement, 0 is
+returned.</P>
+
+<P>Function arguments evaluate from the left to the right, so in</P>
+
+<TABLE><TR><TD><PRE class=exm>
+f(a,b,c);
+</PRE></TD></TR></TABLE>
+
+<P>A is guaranteed to evaluate before <I>B</I> and <I>C</I> and <I>B</I>
+is guaranteed to evaluate before <I>C</I>.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+pow(x, y) DO VAR a;
+    a := 1;
+    WHILE (y) DO
+        a := a*x;
+        y := y-1;
+    END
+    RETURN a;
+END
+
+DO VAR x;
+    x := pow(2,10);
+END
+</PRE></TD></TR></TABLE>
+
+
+<H2><A name="lit"></A>Literals</H2>
+
+<H3>Integers</H3>
+
+<P>An integer is a number representing its own value. Note that
+negative numbers have a leading '<CODE>%</CODE>' sign rather than a
+'<CODE>-</CODE>' sign. While the latter also works, it is, strictly
+speaking, the application of the '<CODE>-</CODE>' operator to a
+positive number, so it may not appear in cvalue contexts.</P>
+
+<P class=hl>In T3X9r2 and later releases, integers may have a
+'<CODE>0x</CODE>' prefix (after the '<CODE>%</CODE>' prefix, if that
+also exists). In this case, the subsequent digits will be interpreted
+as a hexa-decimal number.
+</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+0
+12345
+%1
+0xfff
+%0xABC
+</PRE></TD></TR></TABLE>
+
+<H3>Characters</H3>
+
+<P>Characters are integers internally. They are represented by
+single characters enclosed in single quotes. In addition, the
+same escape sequences as in strings may be used.</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+'x'
+'\\'
+'''
+'\e'
+</PRE></TD></TR></TABLE>
+
+<H3>Strings</H3>
+
+<P>A string is a byte vector filled with characters. Strings are
+delimited by '<CODE>"</CODE>' characters and NUL-terminated internally.
+All characters between the delimiting double quotes represent
+themselves. In addition, the following escape sequences may be
+used to include some special characters:</P>
+
+<TABLE class=table>
+ <TR><TH>Sequence</TH><TH>Character</TH><TH>Description</TH></TR>
+ <TR><TD><CODE>\a</CODE></TD><TD>BEL</TD><TD>Bell</TD></TR>
+ <TR><TD><CODE>\b</CODE></TD><TD>BS</TD><TD>Backspace</TD></TR>
+ <TR><TD><CODE>\e</CODE></TD><TD>ESC</TD><TD>Escape</TD></TR>
+ <TR><TD><CODE>\f</CODE></TD><TD>FF</TD><TD>Form Feed</TD></TR>
+ <TR><TD><CODE>\n</CODE></TD><TD>LF</TD><TD>Line Feed (newline)</TD></TR>
+ <TR><TD><CODE>\q</CODE></TD><TD>"</TD><TD>Quote</TD></TR>
+ <TR><TD><CODE>\r</CODE></TD><TD>CR</TD><TD>Carriage Return</TD></TR>
+ <TR><TD><CODE>\s</CODE></TD><TD>&nbsp;</TD><TD>Space</TD></TR>
+ <TR><TD><CODE>\t</CODE></TD><TD>HT</TD><TD>Horizontal Tabulator</TD></TR>
+ <TR><TD><CODE>\v</CODE></TD><TD>VT</TD><TD>Vertical Tabulator</TD></TR>
+ <TR><TD><CODE>\\</CODE></TD><TD>\</TD><TD>Backslash</TD></TR>
+</TABLE>
+
+<DIV>&nbsp;</DIV>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+""
+"hello, world!\n"
+"\qhi!\q, she said"
+</PRE></TD></TR></TABLE>
+
+<H3><A name="ptbl"></A>Packed Tables</H3>
+
+<P class=hl>Packed tables are only included and T3X9r2 and
+later releases.</P>
+
+<P>A packed table is a byte vector literal. It is a set of cvalues
+delimited by square brackets and separated by commas. Note that
+string notation is a short and portable, but also limited,
+notation for byte vectors. For instance, the byte vectors</P>
+
+<TABLE><TR><TD><PRE class=exm>
+"HELLO"
+PACKED [ 'H', 'E', 'L', 'L', 'O', 0 ]
+</PRE></TD></TR></TABLE>
+
+<P>are identical. Byte vectors can contain any values in the range
+from 0 to 255.</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+PACKED [ 1 ]
+PACKED [ 1, 2, 3 ]
+PACKED [ 14, 'H', 'i', 15 ]
+</PRE></TD></TR></TABLE>
+
+<H3><A name="table"></A>Tables</H3>
+
+<P>A table is a vector literal, i.e. a sequence of values. It
+is delimited by square brackets and elements are separated by
+commas. Table elements can be cvalues, strings, and tables.</P>
+
+<TABLE><TR><TH><B>Examples:</B></TH><TD><PRE class=exm>
+[1, 2, 3]
+["5 times -7", %35]
+[[1,0,0],[0,1,0],[0,0,1]]
+</PRE></TD></TR></TABLE>
+
+<H3><A name="dyntbl"></A>Dynamic Tables</H3>
+
+<P>The dynamic table is a special case of the table in which one
+or multiple elements are computed at program run time. Dynamic
+table elements are enclosed in parentheses. E.g. in the table</P>
+
+<TABLE><TR><TD><PRE class=exm>
+["x times 7", (x*7)]
+</PRE></TD></TR></TABLE>
+
+<P>the value of the second element would be computed and filled
+in when the table is being evaluated. Note that dynamic table
+elements are being replaced in situ, and remain the same only
+until they are replaced again.</P>
+
+<P>Multiple dynamic elements may be enclosed by a single pair of
+parentheses. For instance, the following tables are the same:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+[(x), (y), (z)]
+[(x, y, z)]
+</PRE></TD></TR></TABLE>
+
+<H2><A name="cval"></A>Cvalues</H2>
+
+<P>A cvalue (constant value) is an expression whose value is known
+at compile time. In full T3X, this is a large subset of full
+expressions, but in T3X9, it it limited to the following:</P>
+
+<UL>
+ <LI>integers
+ <LI>characters
+ <LI>constants
+</UL>
+
+<P>as well as (given that X and Y are one of the above):</P>
+
+<UL>
+ <LI><CODE>X+Y</CODE>
+ <LI><CODE>X*Y</CODE>
+</UL>
+
+<H2><A name="conv"></A>Naming Conventions</H2>
+
+<P>Symbolic names for variables, constants, structures, and
+functions are constructed from the following alphabet:</P>
+
+<UL>
+ <LI>the characters <CODE>a</CODE>-<CODE>z</CODE>
+ <LI>the digits <CODE>0</CODE>-<CODE>9</CODE>
+ <LI>the special characters '<CODE>_</CODE>' and '<CODE>.</CODE>'
+</UL>
+
+<P>The first character of a name must be non-numeric, the remaining
+characters may be any of the above.</P>
+
+<P>Upper and lower case is not distinguished, the symbolic names</P>
+
+<TABLE><TR><TD><PRE class=exm>
+FOO Foo foo
+</PRE></TD></TR></TABLE>
+
+<P>are all considered to be equal.</P>
+
+<P>By convention,</P>
+
+<UL>
+ <LI><CODE>CONST</CODE> names are all upper-case
+ <LI><CODE>STRUCT</CODE> names are all upper-case
+ <LI>global <CODE>VAR</CODE> names are capitalized
+ <LI>local <CODE>VAR</CODE> names are all lower-case
+ <LI>function names are all lower-case
+</UL>
+
+<P>Keywords, like <CODE>VAR</CODE>, <CODE>IF</CODE>, <CODE>DO</CODE>,
+etc, are sometimes printed in upper case in documentation, but are
+usually in lower case in actual programs.</P>
+
+<H2><A name="shad"></A>Shadowing</H2>
+
+<P>There is a single name space without any shadowing in T3X:</P>
+
+<UL>
+ <LI>all global names must be different
+ <LI>no local name may have the same name as a global name
+ <LI>all local names in the same scope must be different
+</UL>
+
+<P>The latter means that local names may be re-used in subsequent
+scopes, e.g.:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+f(x) RETURN x;
+g(x) RETURN x;
+</PRE></TD></TR></TABLE>
+
+<P>would be a valid program. However,</P>
+
+<TABLE><TR><TD><PRE class=exm>
+f(x) DO VAR x; END  !!! WRONG !!!
+</PRE></TD></TR></TABLE>
+
+<P>would not be a valid program, because <CODE>VAR x;</CODE> redefines the
+argument of <I>F</I>.</P>
+
+<H2><A name="lib"></A>Built-In Functions</H2>
+
+<P>The following library functions exist in T3X9. They resemble
+the functions of the T3X core module of the full language, i.e.
+a T3X9 program can be compiled by a T3X compiler by adding the
+following code to the top of the program:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+MODULE name(t3x);
+OBJECT t[t3x].
+</PRE></TD></TR></TABLE>
+
+<P>These functions are built into the T3X9 compiler, though, and
+do not have to be declared in any way. The '<CODE>.</CODE>' in the function
+names resembles the message operator of the full language.</P>
+
+<P>T3X9r3 accepts (and ignores) the above declarations at the
+beginning of a program. A program containing these declarations
+can be compiled by any T3X compiler. 
+</P>
+
+<H3><CODE>T.MEMCOMP(b1, b2, len)</CODE></H3>
+
+<P>Compare the first <I>LEN</I> bytes of the byte vectors <I>B1</I>
+and <I>B2</I>.  Return the difference of the first pair of mismatching
+bytes. A return code of 0 means that the compared regions are equal.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.memcomp("aaa", "aba", 3)  ! gives 'b'-'a' = %1
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.MEMCOPY(bs, bd, len)</CODE></H3>
+
+<P>Copy <I>LEN</I> bytes from the byte vector <I>BS</I> (source) to the byte
+vector <I>BD</I> (destination). Return 0.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO VAR b:100; t.memcopy("hello", b, 5); END
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.MEMFILL(bv, b, len)</CODE></H3>
+
+<P>Fill the first <I>LEN</I> bytes of the byte vector <I>BV</I> with the byte
+value <I>B</I>. Return 0.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO VAR b:100; t.memfill(b, 0, 100); END
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.MEMSCAN(bv, b, len)</CODE></H3>
+
+<P>Locate the first occurrence of the byte value <I>B</I> in the first
+<I>LEN</I> bytes of the byte vector <I>BV</I> and return its offset in the
+vector.  When <I>B</I> does not exist in the given region, return -1.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.memscan("aaab", 'b', 4)  ! returns 3
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.READ(fd, buf, len)</CODE></H3>
+
+<P>Read up to <I>LEN</I> characters from the file descriptor <I>FD</I>
+into the buffer <I>BUF</I>. Return the number of characters actually read.
+Return -1 in case of an error.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO b::100; t.read(0, b, 99); END
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.WRITE(fd, buf, len)</CODE></H3>
+
+<P>Write <I>LEN</I> characters from the buffer <I>BUF</I> to the file
+descriptor <I>FD</I>. Return the number of characters actually written.
+Return -1 in case of an error.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.write(1, "hello, world!\n", 14);
+</PRE></TD></TR></TABLE>
+
+<H2><A name="lib2"></A>Release 2 Built-Ins</H2>
+
+<P class=hl>The following functions are only available in T3X9 Release 2, but
+not in the compiler described in the book.
+</P>
+
+<H3><CODE>T.CREATE(path)</CODE></H3>
+
+<P>Create a file with the given <I>PATH</I>, open it, and return its file
+descriptor. In case of an error, return -1.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.create("new-file");
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.OPEN(path, mode)</CODE></H3>
+
+<P>Open file <I>PATH</I> in the given <I>MODE</I>, where 0=read-only,
+1=write-only, and 2=read/write. Return -1 in case of an error.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.open("existing-file", 0);
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.CLOSE(fd)</CODE></H3>
+
+<P>Close the file descriptor <I>FD</I>. Return 0 for success and -1 in
+case of an error.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+DO var fd;
+    fd := t.create("file");
+    if (fd &gt;= 0) t.close();
+END
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.RENAME(path, new)</CODE></H3>
+
+<P>Rename the file given in <I>PATH</I> to <I>NEW</I>. Return 0 for success
+and -1 in case of an error.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.rename("old-name", "new-name");
+</PRE></TD></TR></TABLE>
+
+<H3><CODE>T.REMOVE(path)</CODE></H3>
+
+<P>Remove the file given in <I>PATH</I>. Return 0 for success and -1 in
+case of an error.</P>
+
+<TABLE><TR><TH><B>Example:</B></TH><TD><PRE class=exm>
+t.remove("temp-file");
+</PRE></TD></TR></TABLE>
+
+<H2><A name="varfn"></A>Variadic Functions</H2>
+
+<P>T3X implements variadic functions (i.e. functions of a variable
+number of arguments) using dynamic tables. For instance, the
+following function returns the sum of a vector of arguments:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+sum(k, v) DO var i, n;
+    n := 0;
+    FOR (i=0, k)
+        n := n+v[i];
+    RETURN n;
+END
+</PRE></TD></TR></TABLE>
+
+<P>Its is an ordinary function returning the sum of a vector. It
+can be considered to be a variadic function, because a dynamic
+table can be passed to it in the V argument:</P>
+
+<TABLE><TR><TD><PRE class=exm>
+sum(5, [(a,b,c,d,e)])
+</PRE></TD></TR></TABLE>
+
+<DIV>&nbsp;</DIV>
+
+<HR>
+
+<P><A href="../contact.html">contact</A> &nbsp;|&nbsp;
+<A href="../privacy.html">privacy</A>
+</P>
+
+</BODY>
+</HTML>

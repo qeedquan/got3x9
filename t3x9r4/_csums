@@ -1,0 +1,16 @@
+23782 2 CHANGES
+46710 1 MANIFEST
+17145 1 Makefile
+54290 1 README
+14051 1 dump.c
+37533 29 t-vm.t
+14537 27 t.c
+29940 34 t.elf
+41089 32 t.t
+31885 19 t.vm
+28851 3 t3x-history.txt
+45560 3 t3x.bnf
+32461 21 t3x.txt
+35568 6 tcdis.c
+25787 7 tcvm.c
+22680 16 test.t

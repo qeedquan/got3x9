@@ -1,0 +1,32 @@
+************************************************************************
+IMPORTANT:
+
+The BOOK version of the T3X compiler uses a T.MEMCOPY procedure with
+the following arguments:
+
+T.MEMCOPY(SOURCE, DESTINATION, LENGTH)
+
+Note that this version is incompatible with the original T3X language,
+which uses
+
+T.MEMCOPY(DESTINATION, SOURCE, LENGTH)
+
+The compiler in this archive uses the original T3X version with the
+destination argument to the left of the source argument. Hence it is
+slightly incompatible to the book version!
+************************************************************************
+
+20220831 Fix: made MOD operator unsigned also in the TCVM.
+20220908 Added test suite (test.t).
+20220831 Fix: MOD operator should be unsigned.
+20200304 Added MODULE and OBJECT dummy declarations (T3X compatibility).
+20190913 Made T.MEMCOPY compatible with the original T3X version.
+20190720 Fixed harmless minor inconsistency in operator table.
+20170605 Add hexa-decimal integer literals to language.
+20170605 Add T3X packed vectors (byte vectors) to language.
+20170528 Add tcdis, Tcode9 disassembler.
+20170528 Add tcvm, ad-hoc Tcode9 virtual machine.
+20170523 Add t-vm.t, T3X9->Tcode9 compiler.
+20170520 Fix: DO VAR x; x(); END would not report call of non-function.
+20170518 Fix parser bug mis-parsing IE (x) IF (y) v; ELSE w;.
+20170430 Add T.CREATE, T.OPEN, T.CLOSE, T.RENAME, T.REMOVE built-ins.

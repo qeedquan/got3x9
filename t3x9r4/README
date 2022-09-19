@@ -1,0 +1,30 @@
+
+	This is the T3X9 compiler, Release 4
+
+	It is superset of the compiler described in
+
+	"Write Your Own Compiler"
+	by Nils M Holm
+
+	More details about the book can be found at T3X.ORG.
+
+	*********************************************************
+	Please consult the CHANGES file before usig this version!
+	*********************************************************
+
+	To compile the compiler on FreeBSD-386, just do
+
+	chmod +x t.elf && ./t.elf <t.t >t.new
+
+	To compile it on any system providing a C89 compiler:
+
+	cc -o t0 t.c && ./t0 <t.t >t.new
+
+	Alternatively, use the Tcode9 virtual machine:
+
+	cc -o tcvm tcvm.c && ./tcvm t.vm <t-vm.t >t.new
+
+	You can then compile T3X9 programs using
+
+	./tcvm t.new <t3x-program >vm-program
+
